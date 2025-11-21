@@ -2,6 +2,7 @@ pipeline {
     agent any
     
     environment {
+        DOCKERHUB_REPO = 'uzoamakaalor/simple-nodejs-app'
         DOCKER_IMAGE = 'simple-nodejs-app'
         CONTAINER_NAME = 'nodejs-app-container'
         APP_PORT = '3000'
@@ -34,6 +35,22 @@ pipeline {
                 echo 'Building Docker image...'
                 sh "docker build -t ${DOCKER_IMAGE}:${BUILD_NUMBER} ."
                 sh "docker tag ${DOCKER_IMAGE}:${BUILD_NUMBER} ${DOCKER_IMAGE}:latest"
+                sh "docker tag ${DOCKER_IMAGE}:${BUILD_NUMBER} ${DOCKERHUB_REPO}:${BUILD_NUMBER}"
+                sh "docker tag ${DOCKER_IMAGE}:${BUILD_NUMBER} ${DOCKERHUB_REPO}:latest"
+            }
+        }
+        
+        stage('Push to Docker Hub') {
+            steps {
+                echo 'Pushing Docker image to Docker Hub...'
+                script {
+                    docker.withRegistry('https://index.docker.io/v1/', 'dockerhub-credentials') {
+                        sh "docker push ${DOCKERHUB_REPO}:${BUILD_NUMBER}"
+                        sh "docker push ${DOCKERHUB_REPO}:latest"
+                    }
+                }
+                echo "Image pushed: ${DOCKERHUB_REPO}:${BUILD_NUMBER}"
+                echo "Image pushed: ${DOCKERHUB_REPO}:latest"
             }
         }
         
@@ -54,9 +71,9 @@ pipeline {
                     docker run -d \
                     --name ${CONTAINER_NAME} \
                     -p ${APP_PORT}:3000 \
-                    ${DOCKER_IMAGE}:latest
+                    ${DOCKERHUB_REPO}:latest
                 """
-                echo 'Application is now running at http://13.51.86.174/:3000'
+                echo 'Application is now running at http://13.51.86.174:3000'
             }
         }
         
@@ -76,7 +93,8 @@ pipeline {
     post {
         success {
             echo '✅ Pipeline completed successfully!'
-            echo "Application is running at: http://13.51.86.174/:${APP_PORT}"
+            echo "Application is running at: http://13.51.86.174:${APP_PORT}"
+            echo "Docker image available at: ${DOCKERHUB_REPO}:${BUILD_NUMBER}"
         }
         failure {
             echo '❌ Pipeline failed!'
