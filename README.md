@@ -26,3 +26,11 @@ docker run -p 3000:3000 simple-nodejs-app
 
 ## CI/CD Pipeline
 This application is automatically built and deployed using Jenkins pipeline.
+
+## Build Status
+- Pipeline Build: Automated via Jenkinsfile
+- Freestyle Build: Automated via Jenkins Freestyle Job
+
+## Latest Updates
+- Added Freestyle job for build and unit tests
+- Configured automatic webhook triggers
